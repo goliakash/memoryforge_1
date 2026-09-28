@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hindsight SecOps & Compliance Memory Agent | Persistent AI Security Memory</title>
+  <meta name="description" content="AI-powered Security Operations and Compliance Memory Agent that turns previous incident investigations into persistent organizational memory for accelerated MTTR and instant audit readiness.">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="brand">
+      <div class="brand-icon">🧠</div>
+      <div>
+        <div class="brand-title">HINDSIGHT SEC-OPS</div>
+        <div class="brand-tagline">Persistent Organizational Security Memory</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-links" aria-label="Main Navigation">
+      <button class="nav-item active" id="navStudio" data-tab="studio">
+        <span>🚨</span>
+        <span>Incident Studio</span>
+        <span class="badge-count" id="badgeIncidentCount">0</span>
+      </button>
+
+      <button class="nav-item" id="navMemory" data-tab="memory">
+        <span>🧠</span>
+        <span>Memory Brain</span>
+        <span class="badge-count" id="badgeMemoryCount">0</span>
+      </button>
+
+      <button class="nav-item" id="navRecurring" data-tab="recurring">
+        <span>⚠️</span>
+        <span>Recurring Risks</span>
+      </button>
+
+      <button class="nav-item" id="navCompliance" data-tab="compliance">
+        <span>📋</span>
+        <span>Compliance & Audit</span>
+      </button>
+
+      <button class="nav-item" id="navTimeline" data-tab="timeline">
+        <span>⏳</span>
+        <span>Timeline</span>
+      </button>
+    </nav>
+
+    <!-- Demo Action Bar -->
+    <div class="nav-actions">
+      <button class="btn-demo-tour" id="btnStartDemoTour" title="Run 1-Click Guided Hackathon Story">
+        <span>▶</span>
+        <span>Run Hackathon Demo Story</span>
+      </button>
+      <button class="btn-ghost" id="btnSeedDemo" title="Seed baseline INC-1024 into Hindsight memory">
+        <span>🌱 Seed</span>
+      </button>
+      <button class="btn-ghost" id="btnResetDemo" title="Clear memory for fresh demo">
+        <span>🧹 Reset</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Application Container -->
+  <main class="container">
+
+    <!-- Top System Pulse Indicator -->
+    <aside class="system-pulse-bar" aria-label="System Status">
+      <div class="pulse-indicator">
+        <div class="pulse-dot"></div>
+        <span><strong>Autonomous SecOps Swarm:</strong> Multi-Agent Mesh Active</span>
+      </div>
+      <div style="display: flex; gap: 1.5rem;">
+        <div class="stat-pill">
+          <span>Hindsight Memories:</span>
+          <strong id="statMemoryCount">0</strong>
+        </div>
+        <div class="stat-pill">
+          <span>Active Synapse Links:</span>
+          <strong id="statSynapseCount">0</strong>
+        </div>
+        <div class="stat-pill">
+          <span>Compliance Frameworks:</span>
+          <strong>SOC 2 • NIST • ISO 27001</strong>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: INCIDENT INVESTIGATION STUDIO       -->
+    <!-- ========================================== -->
+    <section class="tab-content active" id="tab-studio">
+      <div class="grid-studio">
+
+        <!-- Left Column: Incident Intake Form -->
+        <div class="glass-panel">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span>⚡</span>
+              <span>Incident Ingestion & Triage</span>
+            </h2>
+            <span class="badge badge-purple">MEMBER 1 & 5</span>
+          </div>
+
+          <div class="card-body">
+            <!-- Quick Load Demo Templates -->
+            <div class="template-bar">
+              <button class="btn-template highlight" id="btnTpl1024">Load #1024 (S3 Public Access)</button>
+              <button class="btn-template highlight" id="btnTpl1038">Load #1038 (Data Lake Exposure)</button>
+              <button class="btn-template" id="btnTpl1045">Load #1045 (Stripe Secret Leak)</button>
+            </div>
+
+            <form id="incidentForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="inputIncidentId">Incident ID</label>
+                  <input type="text" id="inputIncidentId" class="form-input" placeholder="e.g. INC-1024">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="inputSeverity">Severity</label>
+                  <select id="inputSeverity" class="form-select">
+                    <option value="CRITICAL">CRITICAL</option>
+                    <option value="HIGH" selected>HIGH</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="LOW">LOW</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="inputTitle">Incident Title</label>
+                <input type="text" id="inputTitle" class="form-input" placeholder="e.g. Public Cloud Storage Exposure" required>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="inputAsset">Affected Asset</label>
+                  <input type="text" id="inputAsset" class="form-input" placeholder="e.g. customer-data-bucket" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="inputAssetType">Asset Type</label>
+                  <select id="inputAssetType" class="form-select">
+                    <option value="Cloud Storage" selected>Cloud Storage</option>
+                    <option value="Microservice / Container">Microservice / Container</option>
+                    <option value="Network Security Group">Network Security Group</option>
+                    <option value="Database">Database</option>
+                    <option value="IAM Identity">IAM Identity</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="inputDesc">Incident Description</label>
+                <textarea id="inputDesc" class="form-textarea" placeholder="Detail the vulnerability, trigger, or finding..." required></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="inputRawEvidence">Raw Evidence / Scanner Findings (Optional)</label>
+                <textarea id="inputRawEvidence" class="form-textarea" style="min-height: 60px;" placeholder="Paste raw CloudTrail, GuardDuty, or SecurityHub logs..."></textarea>
+              </div>
+
+              <input type="hidden" id="inputEnv" value="Production">
+
+              <button type="submit" class="btn-primary" id="btnSubmitInvestigate">
+                <span>⚡</span>
+                <span>Run Multi-Agent Investigation</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right Column: Investigation Results Console -->
+        <div class="glass-panel">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span>🧠</span>
+              <span>AI Investigation & Hindsight Synthesis</span>
+            </h2>
+            <div id="investigationActions">
+              <button class="btn-retain" id="btnRetainMemory" disabled>
+                <span>🧠</span>
+                <span>Retain in Hindsight Memory</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <!-- Multi-Agent Telemetry Stream Box -->
+            <div class="agent-stream-box" id="agentStreamBox" aria-live="polite">
+              <div class="agent-log-line">
+                <span class="agent-badge-inc">[SYSTEM]</span> Ready. Ingest an incident or select a demo template above to trigger the multi-agent memory loop.
+              </div>
+            </div>
+
+            <!-- Recall Alert Banner (Dynamically shown when precedent is found!) -->
+            <div class="recall-alert-card" id="recallAlertCard" style="display: none;">
+              <!-- Injected by JS -->
+            </div>
+
+            <!-- Investigation Output Details -->
+            <div id="investigationResults" style="display: none;">
+
+              <!-- Header Summary -->
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.2rem;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem;">
+                    <span style="font-family: var(--font-mono); font-weight: 700; color: var(--neon-cyan); font-size: 1.1rem;" id="resIncidentId">INC-1024</span>
+                    <span class="badge badge-high" id="resSeverity">HIGH</span>
+                    <span class="badge badge-success">INVESTIGATION COMPLETE</span>
+                  </div>
+                  <h1 style="font-family: var(--font-main); font-size: 1.25rem; font-weight: 700; color: #ffffff;" id="resTitle">Public Cloud Storage Exposure</h1>
+                  <div style="font-size: 0.82rem; color: #94a3b8;">Asset: <span id="resAsset" style="color: #ffffff; font-family: var(--font-mono);">customer-data-bucket</span></div>
+                </div>
+              </div>
+
+              <!-- Sub-tab Navigation -->
+              <div class="subtabs">
+                <button class="subtab-btn active" data-panel="panelRootCause">Root Cause & RCA</button>
+                <button class="subtab-btn" data-panel="panelRemediation">Verified Playbook</button>
+                <button class="subtab-btn" data-panel="panelControls">Compliance Controls</button>
+                <button class="subtab-btn" data-panel="panelEvidence">Evidence Artifacts</button>
+              </div>
+
+              <!-- Sub-tab 1: Root Cause -->
+              <div class="subtab-panel active" id="panelRootCause">
+                <div style="background: rgba(7, 9, 14, 0.7); border: 1px solid var(--border-glass-subtle); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                  <div style="font-size: 0.75rem; color: var(--neon-purple); font-weight: 700; text-transform: uppercase; margin-bottom: 0.3rem;">Primary Root Cause Hypothesis</div>
+                  <div style="font-size: 0.95rem; font-weight: 600; color: #ffffff;" id="resRootCause">Incorrect access policy and missing bucket-level PublicAccessBlock configuration.</div>
+                </div>
+                <div style="font-size: 0.84rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 1rem;" id="resRcaDetail">
+                  Resource was provisioned with overly permissive IAM policy.
+                </div>
+                <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.4rem;">Preventive Action Items</div>
+                <ul id="resPreventiveActions" style="font-size: 0.82rem; color: #94a3b8; padding-left: 1.2rem; line-height: 1.6;">
+                  <!-- Injected by JS -->
+                </ul>
+              </div>
+
+              <!-- Sub-tab 2: Remediation Playbook -->
+              <div class="subtab-panel" id="panelRemediation">
+                <div id="resRemediationSteps">
+                  <!-- Injected by JS -->
+                </div>
+              </div>
+
+              <!-- Sub-tab 3: Controls -->
+              <div class="subtab-panel" id="panelControls">
+                <div id="resControlsList">
+                  <!-- Injected by JS -->
+                </div>
+              </div>
+
+              <!-- Sub-tab 4: Evidence -->
+              <div class="subtab-panel" id="panelEvidence">
+                <div class="evidence-grid" id="resEvidenceGrid">
+                  <!-- Injected by JS -->
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: HINDSIGHT MEMORY BRAIN & GRAPH      -->
+    <!-- ========================================== -->
+    <section class="tab-content" id="tab-memory">
+      <div style="display: grid; grid-template-columns: 1fr 420px; gap: 1.5rem;">
+
+        <!-- Left: Interactive Canvas Force Graph -->
+        <div class="glass-panel">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span>🧠</span>
+              <span>Organizational Memory Synapse Graph</span>
+            </h2>
+            <span class="badge badge-purple">MEMBER 2 WORKSTREAM</span>
+          </div>
+
+          <div class="card-body" style="padding: 0;">
+            <div class="graph-container">
+              <canvas id="memoryCanvas"></canvas>
+
+              <!-- Zoom & Pan Controls -->
+              <div class="graph-overlay-controls">
+                <button class="graph-btn" id="btnGraphZoomIn" title="Zoom In">+</button>
+                <button class="graph-btn" id="btnGraphZoomOut" title="Zoom Out">-</button>
+                <button class="graph-btn" id="btnGraphReset" title="Reset View">⟲</button>
+              </div>
+
+              <!-- Graph Legend -->
+              <div class="graph-legend">
+                <div class="legend-item"><div class="legend-dot" style="background: #00c8ff;"></div><span>Incident</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background: #c084fc;"></div><span>Root Cause</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background: #00ff88;"></div><span>Control</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background: #fbbf24;"></div><span>Remediation</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background: #38bdf8;"></div><span>Evidence</span></div>
+              </div>
+            </div>
+
+            <!-- Clicked Node Inspector Card -->
+            <div id="graphNodeDetail" style="padding: 1rem;">
+              <div style="font-size: 0.82rem; color: #64748b; text-align: center;">Click or drag any node above to inspect persistent memory attributes.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Semantic Memory Recall Sandbox -->
+        <div class="glass-panel">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span>🔍</span>
+              <span>Semantic Recall Sandbox</span>
+            </h2>
+          </div>
+
+          <div class="card-body">
+            <p style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 1rem;">
+              Test how the AI agent searches organizational memory using semantic vectors and SecOps ontology.
+            </p>
+
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.8rem;">
+              <input type="text" id="memorySearchInput" class="form-input" placeholder="e.g. storage bucket open to public read...">
+              <button class="btn-primary" id="btnMemorySearch" style="width: auto; padding: 0.65rem 1rem;">
+                Recall
+              </button>
+            </div>
+
+            <!-- Quick Pill Suggestions -->
+            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.2rem;">
+              <button class="btn-template memory-prompt-pill">public bucket policy</button>
+              <button class="btn-template memory-prompt-pill">ssh port 22 0.0.0.0/0</button>
+              <button class="btn-template memory-prompt-pill">api key in logs</button>
+            </div>
+
+            <div id="memoryRecallResults">
+              <div style="text-align: center; color: #64748b; font-size: 0.82rem; padding: 1.5rem 0;">
+                Type a query above or click a prompt to test instant semantic memory recall.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: RECURRING RISKS & INTELLIGENCE      -->
+    <!-- ========================================== -->
+    <section class="tab-content" id="tab-recurring">
+      <div class="glass-panel" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span>⚠️</span>
+            <span>Recurring Vulnerability Intelligence & Blindspot Detection</span>
+          </h2>
+          <span class="badge badge-high">PREVENTIVE GOVERNANCE</span>
+        </div>
+        <div class="card-body">
+          <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1.2rem;">
+            When organizations lack memory, the same mistakes recur repeatedly. Hindsight clusters historical incidents to flag systemic vulnerabilities across assets and automatically prescribes architectural guardrails.
+          </p>
+
+          <div id="recurringPatternsContainer">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: COMPLIANCE & AUDIT VAULT            -->
+    <!-- ========================================== -->
+    <section class="tab-content" id="tab-compliance">
+      <div class="glass-panel">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span>👨⚖️</span>
+            <span>Compliance & Audit Evidence Portal</span>
+          </h2>
+          <div style="display: flex; gap: 0.6rem;">
+            <button class="btn-ghost" id="btnExportAuditReport">
+              <span>📄</span>
+              <span>Export Audit Package (PDF)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 1rem;">
+            Auditors can query organizational memory directly in natural language. Hindsight synthesizes findings, remediation states, and cryptographic evidence hashes across SOC 2, NIST, and ISO 27001.
+          </p>
+
+          <!-- Auditor Query Bar -->
+          <div style="display: flex; gap: 0.6rem; margin-bottom: 0.8rem;">
+            <input type="text" id="auditQueryInput" class="form-input" value="Show historical access-control findings, remediation status, and available evidence" style="font-size: 0.95rem;">
+            <button class="btn-primary" id="btnRunAudit" style="width: auto; padding: 0.7rem 1.4rem;">
+              <span>Execute Auditor Query</span>
+            </button>
+          </div>
+
+          <!-- Sample Auditor Pills -->
+          <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;">
+            <button class="btn-template audit-sample-pill" data-query="Show historical access-control findings, remediation status, and available evidence">
+              Access Control Findings & Evidence
+            </button>
+            <button class="btn-template audit-sample-pill" data-query="List all critical cloud security incidents and post-mortems">
+              Critical Incidents & Post-Mortems
+            </button>
+            <button class="btn-template audit-sample-pill" data-query="Retrieve evidence of S3 data-at-rest protection and public access blocks">
+              Data-at-Rest & S3 Guardrails
+            </button>
+          </div>
+
+          <!-- Audit Results Output Section -->
+          <div id="auditResultsSection" style="display: none;">
+            <!-- Executive Summary Card -->
+            <div style="background: rgba(7, 9, 14, 0.7); border: 1px solid var(--border-glass); padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.8rem;">
+                <div>
+                  <span class="badge badge-success">AUDIT DOSSIER GENERATED</span>
+                  <h3 style="font-family: var(--font-main); font-size: 1.1rem; color: #ffffff; margin-top: 0.3rem;">
+                    Executive Compliance Summary
+                  </h3>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 0.75rem; color: #94a3b8;">Remediation Compliance</div>
+                  <div style="font-family: var(--font-mono); font-size: 1.4rem; font-weight: 700; color: var(--neon-emerald);" id="auditComplianceRate">100%</div>
+                </div>
+              </div>
+              <p style="font-size: 0.86rem; color: #cbd5e1; line-height: 1.5;" id="auditExecutiveSummary">
+                <!-- Injected by JS -->
+              </p>
+              <div style="margin-top: 0.8rem; font-family: var(--font-mono); font-size: 0.72rem; color: #64748b; word-break: break-all;">
+                <strong>Memory Cryptographic Attestation Hash:</strong> <span id="auditAttestationHash" style="color: var(--neon-cyan);"></span>
+              </div>
+            </div>
+
+            <!-- Findings Table -->
+            <h3 style="font-family: var(--font-main); font-size: 1.05rem; color: #ffffff; margin-bottom: 0.6rem;">
+              Retrieved Compliance Findings (<span id="auditTotalFindings">0</span>)
+            </h3>
+            <div style="overflow-x: auto;">
+              <table class="audit-table">
+                <thead>
+                  <tr>
+                    <th>Finding ID</th>
+                    <th>Control & Framework</th>
+                    <th>Root Cause</th>
+                    <th>Remediation Status</th>
+                    <th>Evidence</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="auditTableBody">
+                  <!-- Injected by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 5: MEMORY TIMELINE                     -->
+    <!-- ========================================== -->
+    <section class="tab-content" id="tab-timeline">
+      <div class="glass-panel">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span>⏳</span>
+            <span>Organizational Security Knowledge Timeline</span>
+          </h2>
+        </div>
+        <div class="card-body">
+          <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 1.5rem;">
+            Watch how organizational security intelligence accumulates and strengthens over time.
+          </p>
+
+          <div id="memoryTimelineContainer" style="max-width: 800px;">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Guided Hackathon Demo Tour Modal Overlay -->
+  <div class="demo-modal-overlay" id="demoModalOverlay" role="dialog" aria-modal="true">
+    <div class="demo-modal-card">
+      <div class="demo-progress" id="demoProgressDots"></div>
+      <div class="demo-step-badge" id="demoStepBadge">STEP 1 OF 5</div>
+      <h2 class="demo-title" id="demoTitle">Demo Title</h2>
+      <p class="demo-desc" id="demoDesc">Demo description narrative.</p>
+
+      <div class="demo-footer">
+        <button class="btn-ghost" id="btnDemoPrev">⟵ Back</button>
+        <div style="display: flex; gap: 0.6rem;">
+          <button class="btn-ghost" id="btnDemoClose">Exit Tour</button>
+          <button class="btn-demo-tour" id="btnDemoNext">
+            <span id="demoNextText">Execute Step & Continue ➔</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/memoryGraph.js"></script>
+  <script src="/static/js/demoTour.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

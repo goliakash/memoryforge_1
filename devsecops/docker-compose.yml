@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  hindsight-secops:
+    build:
+      context: ..
+      dockerfile: devsecops/Dockerfile
+    container_name: hindsight-secops-agent
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../backend/data:/app/backend/data
+    environment:
+      - PORT=8000
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    restart: unless-stopped

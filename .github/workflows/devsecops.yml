@@ -1,0 +1,44 @@
+name: Hindsight DevSecOps CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  devsecops-gate:
+    name: Security & Compliance Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install flake8 bandit
+
+      - name: Code Linting
+        run: |
+          flake8 backend --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: SAST Security Audit (Bandit)
+        run: |
+          bandit -r backend/app -ll -ii
+
+      - name: DevSecOps Custom Scanner
+        run: |
+          python devsecops/security_scan.py
+
+      - name: Build Docker Container
+        run: |
+          docker build -t hindsight-secops:latest -f devsecops/Dockerfile .
