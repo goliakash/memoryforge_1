@@ -10,11 +10,20 @@ class IncidentSeverity(str, Enum):
     CRITICAL = "CRITICAL"
 
 class IncidentStatus(str, Enum):
+    OPEN = "OPEN"
     DETECTED = "DETECTED"
     INVESTIGATING = "INVESTIGATING"
+    IN_PROGRESS = "IN_PROGRESS"
     REMEDIATED = "REMEDIATED"
+    VERIFIED = "VERIFIED"
     CLOSED = "CLOSED"
     RECURRING = "RECURRING"
+
+class EvidenceSourceState(str, Enum):
+    OBSERVED = "OBSERVED"
+    SIMULATED = "SIMULATED"
+    EXECUTED = "EXECUTED"
+    VERIFIED = "VERIFIED"
 
 class EvidenceItem(BaseModel):
     id: str
@@ -23,6 +32,7 @@ class EvidenceItem(BaseModel):
     description: str
     content_preview: str
     sha256_hash: str
+    source_state: EvidenceSourceState = EvidenceSourceState.SIMULATED
     timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
 
 class RemediationStep(BaseModel):
@@ -30,7 +40,7 @@ class RemediationStep(BaseModel):
     step_number: int
     action: str
     rationale: str
-    status: str = "PENDING"  # PENDING, APPLIED, VERIFIED
+    status: str = "PENDING"  # PENDING, IN_PROGRESS, REMEDIATED, VERIFIED
     verification_command: Optional[str] = None
 
 class ControlMapping(BaseModel):
@@ -38,7 +48,7 @@ class ControlMapping(BaseModel):
     control_id: str  # e.g., "CC6.1", "PR.AC-3", "A.9.2.3"
     control_name: str
     requirement: str
-    audit_status: str = "COMPLIANT_POST_REMEDIATION"
+    audit_status: str = "ACTION_REQUIRED"
 
 class PostMortem(BaseModel):
     summary: str
