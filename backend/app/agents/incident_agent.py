@@ -5,7 +5,7 @@ from typing import Dict, Any, List, Optional, Tuple
 
 from ..models.incident import (
     Incident, IncidentCreate, IncidentSeverity, IncidentStatus,
-    EvidenceItem, RemediationStep, ControlMapping, PostMortem
+    EvidenceItem, EvidenceSourceState, RemediationStep, ControlMapping, PostMortem
 )
 from ..models.memory import RecallQuery
 from ..memory.hindsight_engine import hindsight
@@ -57,7 +57,7 @@ class IncidentAgent:
             recalled_precedent = recall_resp.matches[0]
             similarity_score = recalled_precedent.similarity_score
             investigation_notes = (
-                f"🧠 Hindsight Recall Alert: High-confidence precedent detected ({recalled_precedent.similarity_percentage}% match to {recalled_precedent.incident_id}). "
+                f"🧠 MemoryForge Recall Alert: High-confidence precedent detected ({recalled_precedent.similarity_percentage}% match to {recalled_precedent.incident_id}). "
                 f"Previous investigation identified '{recalled_precedent.matched_root_cause}' as the root cause. "
                 f"Recalled and applied previous verified remediation playbook to minimize MTTR."
             )
@@ -87,7 +87,7 @@ class IncidentAgent:
                     step_number=idx,
                     action=action_text,
                     rationale=f"Verified effective in resolving precedent incident {recalled_precedent.incident_id}.",
-                    status="VERIFIED",
+                    status="PENDING",
                     verification_command=f"aws s3api get-public-access-block --bucket {incident_create.affected_asset}"
                 ))
         else:
@@ -98,7 +98,7 @@ class IncidentAgent:
                     step_number=1,
                     action=f"Remove public access ACLs and apply PublicAccessBlock to '{incident_create.affected_asset}'.",
                     rationale="Immediate containment to stop active data exposure.",
-                    status="VERIFIED",
+                    status="PENDING",
                     verification_command=f"aws s3api put-public-access-block --bucket {incident_create.affected_asset} --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
                 ),
                 RemediationStep(
@@ -106,7 +106,7 @@ class IncidentAgent:
                     step_number=2,
                     action="Enable account-level S3 Block Public Access preventive protection.",
                     rationale="Prevents downstream creation of public storage buckets by any engineer.",
-                    status="VERIFIED",
+                    status="PENDING",
                     verification_command="aws s3control put-public-access-block --account-id $AWS_ACCOUNT_ID"
                 ),
                 RemediationStep(
@@ -114,7 +114,7 @@ class IncidentAgent:
                     step_number=3,
                     action="Review IAM policies and revoke unauthorized wildcard principals.",
                     rationale="Enforces least-privilege role boundaries.",
-                    status="VERIFIED",
+                    status="PENDING",
                     verification_command=f"aws s3api get-bucket-policy --bucket {incident_create.affected_asset}"
                 ),
                 RemediationStep(
@@ -122,7 +122,7 @@ class IncidentAgent:
                     step_number=4,
                     action="Enable CloudTrail S3 Data Events & AWS Config automated drift detection rule.",
                     rationale="Provides real-time alerting if policy alterations recur.",
-                    status="VERIFIED",
+                    status="PENDING",
                     verification_command="aws configservice put-evaluations"
                 )
             ]
@@ -148,10 +148,11 @@ class IncidentAgent:
         evidence_vault.append(EvidenceItem(
             id=f"EV-{inc_id}-01",
             filename=f"config_snapshot_{incident_create.affected_asset}.json",
-            type="Configuration Snapshot",
+            type="Configuration Snapshot (OBSERVED)",
             description=f"Automated configuration scan showing public access state on {incident_create.affected_asset}.",
             content_preview=config_payload,
-            sha256_hash=self._generate_sha256(config_payload)
+            sha256_hash=self._generate_sha256(config_payload),
+            source_state=EvidenceSourceState.OBSERVED
         ))
 
         # 2. Security scanner finding
@@ -164,10 +165,11 @@ class IncidentAgent:
         evidence_vault.append(EvidenceItem(
             id=f"EV-{inc_id}-02",
             filename=f"security_finding_{inc_id}.log",
-            type="Security Scanner Finding",
+            type="Security Scanner Finding (OBSERVED)",
             description="Security Hub / CSPM finding triggering the initial incident alert.",
             content_preview=scanner_payload,
-            sha256_hash=self._generate_sha256(scanner_payload)
+            sha256_hash=self._generate_sha256(scanner_payload),
+            source_state=EvidenceSourceState.OBSERVED
         ))
 
         # 3. Access logs evidence
@@ -179,10 +181,11 @@ class IncidentAgent:
         evidence_vault.append(EvidenceItem(
             id=f"EV-{inc_id}-03",
             filename=f"cloudtrail_audit_extract_{inc_id}.log",
-            type="Audit & Access Log",
-            description="Access logs capturing exposure timeline and subsequent remediation confirmation.",
+            type="Audit & Access Log (SIMULATED)",
+            description="Access logs capturing exposure timeline and simulated remediation confirmation.",
             content_preview=logs_payload,
-            sha256_hash=self._generate_sha256(logs_payload)
+            sha256_hash=self._generate_sha256(logs_payload),
+            source_state=EvidenceSourceState.SIMULATED
         ))
 
         # Step 6: Post-Mortem Report
@@ -203,7 +206,7 @@ class IncidentAgent:
                 "Conduct automated weekly IAM permissions review."
             ],
             lessons_learned=[
-                "Hindsight memory recall accelerates root cause identification from hours to seconds.",
+                "MemoryForge memory recall accelerates root cause identification from hours to seconds.",
                 "Organizational memory ensures proven remediation playbooks are reused rather than reinvented.",
                 "Evidence artifacts must be cryptographically hashed for audit defensibility."
             ],
@@ -224,7 +227,7 @@ class IncidentAgent:
             asset_type=incident_create.asset_type or "Cloud Storage",
             environment=incident_create.environment or "Production",
             raw_evidence=incident_create.raw_evidence,
-            status=IncidentStatus.REMEDIATED,
+            status=IncidentStatus.IN_PROGRESS,
             root_cause=root_cause,
             controls=controls,
             remediation_playbook=remediation_steps,

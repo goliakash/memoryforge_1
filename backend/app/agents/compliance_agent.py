@@ -14,35 +14,35 @@ CONTROL_CATALOG = {
             control_id="CC6.1",
             control_name="Logical Access Security Controls",
             requirement="The entity restricts logical access to confidential information assets and storage to authorized users only.",
-            audit_status="AUDITED_REMEDIATED"
+            audit_status="ACTION_REQUIRED"
         ),
         ControlMapping(
             framework="SOC 2 Type II",
             control_id="CC6.3",
             control_name="Role-Based Access Enforcement",
             requirement="Role-based access permissions are provisioned according to the principle of least privilege.",
-            audit_status="AUDITED_REMEDIATED"
+            audit_status="ACTION_REQUIRED"
         ),
         ControlMapping(
             framework="NIST CSF 2.0",
             control_id="PR.AC-3",
             control_name="Access Control Enforcement",
             requirement="Access permissions and authorizations are managed, incorporating least privilege and separation of duties.",
-            audit_status="AUDITED_REMEDIATED"
+            audit_status="ACTION_REQUIRED"
         ),
         ControlMapping(
             framework="ISO/IEC 27001:2022",
             control_id="A.9.2.3",
             control_name="Management of Privileged Access Rights",
             requirement="The allocation and use of privileged access rights shall be restricted and controlled.",
-            audit_status="AUDITED_REMEDIATED"
+            audit_status="ACTION_REQUIRED"
         ),
         ControlMapping(
             framework="CIS Benchmark",
             control_id="CIS-AWS-2.1.5",
             control_name="S3 Bucket Public Access Block",
             requirement="Ensure S3 Buckets are configured with 'Block Public Access' enabled at both bucket and account levels.",
-            audit_status="AUDITED_REMEDIATED"
+            audit_status="ACTION_REQUIRED"
         )
     ],
     "data_protection": [
@@ -51,14 +51,14 @@ CONTROL_CATALOG = {
             control_id="CC6.7",
             control_name="Data Transmission & Storage Protection",
             requirement="The entity implements controls to prevent unauthorized disclosure of sensitive data.",
-            audit_status="AUDITED_REMEDIATED"
+            audit_status="ACTION_REQUIRED"
         ),
         ControlMapping(
             framework="NIST CSF 2.0",
             control_id="PR.DS-1",
             control_name="Data-at-Rest Protection",
             requirement="Data-at-rest is protected using authenticated encryption and strict key policies.",
-            audit_status="AUDITED_REMEDIATED"
+            audit_status="ACTION_REQUIRED"
         )
     ],
     "incident_response": [
@@ -67,14 +67,14 @@ CONTROL_CATALOG = {
             control_id="CC7.2",
             control_name="Security Incident Remediation & Post-Mortem",
             requirement="Security incidents are tracked, investigated, remediated, and subjected to post-incident analysis.",
-            audit_status="AUDITED_REMEDIATED"
+            audit_status="ACTION_REQUIRED"
         ),
         ControlMapping(
             framework="NIST CSF 2.0",
             control_id="RS.RP-1",
             control_name="Incident Response Execution",
             requirement="Response plan is executed during or after an incident to contain and mitigate impact.",
-            audit_status="AUDITED_REMEDIATED"
+            audit_status="ACTION_REQUIRED"
         )
     ]
 }
@@ -105,14 +105,14 @@ class ComplianceAgent:
         # Incident response is always mapped for tracked incidents
         mapped_controls.append(CONTROL_CATALOG["incident_response"][0])
         
-        # Deduplicate
+        # Deduplicate & return fresh copies to prevent shared mutation across incidents
         seen = set()
         unique = []
         for c in mapped_controls:
             key = f"{c.framework}_{c.control_id}"
             if key not in seen:
                 seen.add(key)
-                unique.append(c)
+                unique.append(c.model_copy())
         return unique
 
     def answer_audit_query(self, query: AuditQuery) -> AuditReport:
@@ -148,9 +148,20 @@ class ComplianceAgent:
                 # If the incident involves storage or access, map standard access control
                 matched_ctrls = [CONTROL_CATALOG["access_control"][0].model_dump()]
 
-            # Determine remediation status
-            all_verified = all(s.get("status") == "VERIFIED" for s in playbook) if playbook else True
-            rem_status = "VERIFIED_CLOSED" if all_verified else "REMEDIATED"
+            # Truthful Audit Posture Check:
+            # Finding is only VERIFIED_CLOSED if all remediation steps are explicitly VERIFIED and verification evidence exists
+            has_verif_ev = any("verification" in e.type.lower() for e in ev_list)
+            all_steps_verified = bool(playbook) and all(s.get("status") == "VERIFIED" for s in playbook)
+
+            if all_steps_verified and has_verif_ev:
+                rem_status = "VERIFIED_CLOSED"
+                signoff_ready = True
+            elif any(s.get("status") in ["REMEDIATED", "IN_PROGRESS", "VERIFIED"] for s in playbook):
+                rem_status = "IN_PROGRESS"
+                signoff_ready = False
+            else:
+                rem_status = "ACTION_REQUIRED"
+                signoff_ready = False
 
             for c in matched_ctrls:
                 finding_id = f"FND-{inc_id}-{c.get('control_id', 'CTRL')}"
@@ -167,14 +178,14 @@ class ComplianceAgent:
                     evidence_items=ev_list,
                     detected_at=mem.get("detected_at", ""),
                     remediated_at=mem.get("retained_at", ""),
-                    auditor_signoff_ready=True
+                    auditor_signoff_ready=signoff_ready
                 ))
 
         # Sort findings by date
         findings.sort(key=lambda f: f.detected_at, reverse=True)
         
         total = len(findings)
-        remediated = sum(1 for f in findings if "REMEDIATED" in f.remediation_status or "CLOSED" in f.remediation_status)
+        remediated = sum(1 for f in findings if f.remediation_status == "VERIFIED_CLOSED")
         compliance_rate = (remediated / total * 100.0) if total > 0 else 100.0
 
         # Create cryptographic attestation hash over all evidence

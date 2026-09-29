@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 
-from .config import PROJECT_NAME, PROJECT_TAGLINE, VERSION
+from .config import PROJECT_NAME, PROJECT_TAGLINE, VERSION, ALLOWED_ORIGINS, ALLOW_CREDENTIALS
 from .models.incident import Incident, IncidentCreate, IncidentStatus
 from .models.memory import RecallQuery, RecallResponse, MemoryGraph, RecurringPattern
 from .models.audit import AuditQuery, AuditReport
@@ -26,8 +26,8 @@ app = FastAPI(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -60,7 +60,13 @@ def get_system_health():
         "hindsight_memory": {
             "total_retained_incidents": len(hindsight.memories),
             "total_synapse_nodes": len(graph.nodes),
-            "total_synapse_links": len(graph.links)
+            "total_synapse_links": len(graph.links),
+            "networks": {
+                "world": len(hindsight.networks.get("WORLD", [])),
+                "experience": len(hindsight.networks.get("EXPERIENCE", [])),
+                "observation": len(hindsight.networks.get("OBSERVATION", [])),
+                "opinion": len(hindsight.networks.get("OPINION", []))
+            }
         }
     }
 
@@ -100,23 +106,21 @@ def retain_incident_in_memory(incident_id: str):
 
 @app.post("/api/incidents/{incident_id}/remediation/{step_id}/status")
 def update_remediation_status(incident_id: str, step_id: str, status: str = Query("VERIFIED")):
-    """Update status of a remediation step."""
-    inc = incident_store.get(incident_id)
-    if not inc:
-        raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found.")
-    
-    found = False
-    for step in inc.remediation_playbook:
-        if step.id == step_id:
-            step.status = status
-            found = True
-            break
-            
-    if not found:
-        raise HTTPException(status_code=404, detail=f"Step {step_id} not found in incident {incident_id}.")
-        
-    incident_store.save(inc)
-    return {"status": "UPDATED", "incident_id": incident_id, "step_id": step_id, "new_status": status}
+    """Update and verify status of a remediation step with demo-safe verification evidence."""
+    try:
+        updated_incident = orchestrator.execute_step_remediation(incident_id, step_id, target_status=status)
+        return {"status": "UPDATED", "incident_id": incident_id, "step_id": step_id, "incident": updated_incident}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@app.post("/api/incidents/{incident_id}/execute-remediation")
+def execute_full_remediation(incident_id: str):
+    """Execute and verify all remediation playbook steps for an incident."""
+    try:
+        updated_incident = orchestrator.execute_full_remediation(incident_id)
+        return {"status": "REMEDIATED_AND_VERIFIED", "incident": updated_incident}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 # --- Hindsight Memory Recall & Graph Endpoints ---
 

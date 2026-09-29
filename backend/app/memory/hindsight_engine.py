@@ -8,7 +8,7 @@ from collections import Counter
 
 from ..config import MEMORY_FILE, GRAPH_FILE, DEFAULT_SIMILARITY_THRESHOLD
 from ..models.memory import (
-    MemoryNode, MemoryNodeType, MemoryLink, MemoryGraph,
+    MemoryNode, MemoryNodeType, MemoryNetworkType, MemoryLink, MemoryGraph,
     RecallQuery, RecallMatch, RecallResponse, RecurringPattern
 )
 from ..models.incident import Incident, EvidenceItem, RemediationStep, ControlMapping
@@ -34,19 +34,64 @@ SECOPS_ONTOLOGY = {
     ]
 }
 
+BASELINE_WORLD_UNITS = [
+    {
+        "id": "WORLD-SOC2-CC6.1",
+        "title": "SOC 2 Type II CC6.1 - Logical Access Controls",
+        "type": "COMPLIANCE_STANDARD",
+        "framework": "SOC 2 Type II",
+        "control_id": "CC6.1",
+        "description": "The entity implements logical access security software, infrastructure, and architectures to protect information assets from unauthorized access.",
+        "requirements": ["Enforce least privilege", "Restrict public storage access", "Audit principal permissions"]
+    },
+    {
+        "id": "WORLD-NIST-PR.AC-3",
+        "title": "NIST CSF 2.0 PR.AC-3 - Access Control & Identity",
+        "type": "SECURITY_FRAMEWORK",
+        "framework": "NIST CSF 2.0",
+        "control_id": "PR.AC-3",
+        "description": "Access permissions and authorizations are managed, incorporating the principles of least privilege and separation of duties.",
+        "requirements": ["Automate policy verification", "Block anonymous bucket policies", "Rotate credentials periodically"]
+    },
+    {
+        "id": "WORLD-ISO-A.9.2.3",
+        "title": "ISO/IEC 27001:2022 A.9.2.3 - Management of Privileged Access Rights",
+        "type": "SECURITY_FRAMEWORK",
+        "framework": "ISO/IEC 27001",
+        "control_id": "A.9.2.3",
+        "description": "The allocation and use of privileged access rights shall be restricted and controlled.",
+        "requirements": ["Review admin grants", "Require MFA for elevated ops", "Audit IAM changes"]
+    },
+    {
+        "id": "WORLD-AWS-SRA-S3",
+        "title": "AWS Security Reference Architecture - Cloud Storage Baseline",
+        "type": "INFRASTRUCTURE_BASELINE",
+        "framework": "AWS SRA",
+        "control_id": "AWS-SRA-S3",
+        "description": "All S3 object stores must enable Block Public Access, enforce SSE encryption, and mandate TLS transport.",
+        "requirements": ["aws_s3_bucket_public_access_block=true", "enforce_ssl=true"]
+    }
+]
+
 class HindsightMemoryEngine:
     """
     Hindsight Organizational Memory Engine
     
     Transforms isolated security incidents and post-mortems into an interconnected,
-    persistent neural-like memory graph that powers instant recall during future
-    investigations and compliance audits.
+    persistent neural-like memory graph across four core memory tiers:
+    WORLD, EXPERIENCE, OBSERVATION, OPINION.
     """
     
     def __init__(self):
         self.memories: Dict[str, Dict[str, Any]] = {}
         self.nodes: Dict[str, MemoryNode] = {}
         self.links: List[MemoryLink] = []
+        self.networks: Dict[MemoryNetworkType, List[Dict[str, Any]]] = {
+            MemoryNetworkType.WORLD: list(BASELINE_WORLD_UNITS),
+            MemoryNetworkType.EXPERIENCE: [],
+            MemoryNetworkType.OBSERVATION: [],
+            MemoryNetworkType.OPINION: []
+        }
         self._load_memory()
 
     def _load_memory(self):
@@ -263,6 +308,12 @@ class HindsightMemoryEngine:
                         confidence=round(sim, 2)
                     ))
 
+        # Update EXPERIENCE network
+        self.networks[MemoryNetworkType.EXPERIENCE] = list(self.memories.values())
+
+        # Update OPINION network based on evolved organizational security learnings
+        self._update_opinions()
+
         self._save_memory()
         return {
             "status": "RETAINED",
@@ -271,56 +322,113 @@ class HindsightMemoryEngine:
             "timestamp": memory_record["retained_at"]
         }
 
+    def _update_opinions(self):
+        """Synthesize organizational risk beliefs / opinions from historical experiences and observations."""
+        opinions = []
+        count_storage = sum(1 for m in self.memories.values() if "storage" in m.get("asset_type", "").lower() or "bucket" in m.get("title", "").lower())
+        if count_storage >= 1:
+            opinions.append({
+                "id": "OP-STORAGE-01",
+                "topic": "Cloud Storage Security Belief",
+                "statement": "Public bucket policies on storage assets present systemic compliance risk and require CI/CD pre-commit validation.",
+                "confidence": 0.95 if count_storage >= 2 else 0.80,
+                "evidence_count": count_storage
+            })
+        self.networks[MemoryNetworkType.OPINION] = opinions
+
     def recall(self, query: RecallQuery, exclude_id: Optional[str] = None) -> RecallResponse:
         """
         Recall past incidents and post-mortems from organizational memory.
-        Calculates similarity using semantic vectors, ontology boosting, and asset correlation.
+        Calculates similarity using Multi-Signal Fusion Scoring:
+        1. Semantic Text Similarity (weight: 0.35)
+        2. Asset Type & Entity Correlation (weight: 0.20)
+        3. Root Cause Category Match (weight: 0.20)
+        4. Security Controls & Framework Alignment (weight: 0.15)
+        5. Environment & Severity Tags Match (weight: 0.10)
         """
         query_vec = self._compute_vector(query.text)
+        query_tokens = set(self._tokenize(query.text))
         matches: List[RecallMatch] = []
 
         for inc_id, mem in self.memories.items():
             if exclude_id and inc_id == exclude_id:
                 continue
             
-            # Base semantic similarity
-            sim = self._cosine_similarity(query_vec, mem["search_vector"])
+            # Signal 1: Base semantic similarity
+            semantic_sim = self._cosine_similarity(query_vec, mem["search_vector"])
+
+            # Signal 2: Asset & Entity Correlation
+            asset_text = f"{mem.get('affected_asset', '')} {mem.get('asset_type', '')}".lower()
+            asset_sim = 1.0 if any(t in asset_text for t in query_tokens) else 0.2
             
-            # Additional heuristic boosts:
-            # 1. Asset similarity boost
-            if any(term in mem["affected_asset"].lower() for term in self._tokenize(query.text)):
-                sim = min(1.0, sim + 0.15)
+            # Signal 3: Root Cause Category Match
+            rc_text = mem.get("root_cause", "").lower()
+            rc_sim = 1.0 if any(t in rc_text for t in query_tokens if len(t) > 3) else 0.3
             
-            # 2. Control domain boost
+            # Signal 4: Security Controls Alignment
+            ctrl_match = False
             if query.control_filter:
                 ctrl_match = any(
                     query.control_filter.lower() in c.get("control_name", "").lower() or
                     query.control_filter.lower() in c.get("framework", "").lower()
                     for c in mem.get("controls", [])
                 )
-                if ctrl_match:
-                    sim = min(1.0, sim + 0.12)
+            else:
+                ctrl_match = any(
+                    any(t in c.get("control_name", "").lower() or t in c.get("requirement", "").lower() for t in query_tokens if len(t) > 3)
+                    for c in mem.get("controls", [])
+                )
+            control_sim = 1.0 if ctrl_match else 0.2
 
-            if sim >= query.min_similarity:
+            # Signal 5: Tags & Environment Match
+            tags = set(mem.get("tags", []))
+            entity_sim = 1.0 if any(t in tags for t in query_tokens) else 0.2
+
+            # Fused Multi-Signal Score
+            fused_score = (
+                (semantic_sim * 0.35) +
+                (asset_sim * 0.20) +
+                (rc_sim * 0.20) +
+                (control_sim * 0.15) +
+                (entity_sim * 0.10)
+            )
+            fused_score = min(1.0, max(0.0, fused_score))
+
+            if fused_score >= query.min_similarity:
                 playbook = mem.get("remediation_playbook", [])
                 remediation_summary = [step.get("action", "") for step in playbook]
                 ctrl_names = [f"{c.get('framework', '')} {c.get('control_id', '')}: {c.get('control_name', '')}" for c in mem.get("controls", [])]
 
+                signal_breakdown = {
+                    "semantic_text_similarity": round(semantic_sim, 2),
+                    "asset_entity_match": round(asset_sim, 2),
+                    "root_cause_category_match": round(rc_sim, 2),
+                    "security_controls_match": round(control_sim, 2),
+                    "tags_and_environment_match": round(entity_sim, 2)
+                }
+                rationale = (
+                    f"Multi-Signal Fusion Match ({int(round(fused_score * 100))}% confidence): "
+                    f"Semantic match ({int(round(semantic_sim * 100))}%), Asset type match ({int(round(asset_sim * 100))}%), "
+                    f"Root cause category ({int(round(rc_sim * 100))}%), Security controls alignment ({int(round(control_sim * 100))}%)."
+                )
+
                 matches.append(RecallMatch(
                     incident_id=inc_id,
                     title=mem["title"],
-                    similarity_score=round(sim, 3),
-                    similarity_percentage=int(round(sim * 100)),
+                    similarity_score=round(fused_score, 3),
+                    similarity_percentage=int(round(fused_score * 100)),
                     matched_root_cause=mem.get("root_cause", "No root cause documented"),
                     matched_controls=ctrl_names,
                     verified_remediation_summary=remediation_summary,
                     evidence_count=len(mem.get("evidence_vault", [])),
                     detected_at=mem.get("detected_at", ""),
                     summary_explanation=(
-                        f"Previous incident {inc_id} ({mem['title']}) matches this scenario with {int(round(sim * 100))}% confidence. "
-                        f"Root cause was diagnosed as '{mem.get('root_cause', '')[:80]}...'. "
-                        f"A verified remediation playbook with {len(playbook)} steps is available to reuse immediately."
-                    )
+                        f"Previous incident {inc_id} ({mem['title']}) matches this scenario with {int(round(fused_score * 100))}% confidence via multi-signal fusion. "
+                        f"Root cause: '{mem.get('root_cause', '')[:80]}...'. "
+                        f"Verified remediation playbook with {len(playbook)} steps transferred."
+                    ),
+                    signal_breakdown=signal_breakdown,
+                    recurrence_rationale=rationale
                 ))
 
         # Sort by similarity descending
@@ -449,6 +557,9 @@ class HindsightMemoryEngine:
         self.nodes.clear()
         self.links.clear()
         self._save_memory()
+
+# Class Alias for compatibility
+LocalHindsightEngine = HindsightMemoryEngine
 
 # Global singleton instance
 hindsight = HindsightMemoryEngine()

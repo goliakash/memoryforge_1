@@ -10,6 +10,12 @@ class MemoryNodeType(str, Enum):
     REMEDIATION = "REMEDIATION"
     EVIDENCE = "EVIDENCE"
 
+class MemoryNetworkType(str, Enum):
+    WORLD = "WORLD"
+    EXPERIENCE = "EXPERIENCE"
+    OBSERVATION = "OBSERVATION"
+    OPINION = "OPINION"
+
 class MemoryNode(BaseModel):
     id: str
     type: MemoryNodeType
@@ -49,6 +55,8 @@ class RecallMatch(BaseModel):
     evidence_count: int
     detected_at: str
     summary_explanation: str
+    signal_breakdown: Optional[Dict[str, float]] = None
+    recurrence_rationale: Optional[str] = None
 
 class RecallResponse(BaseModel):
     query: str
