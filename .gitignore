@@ -3,3 +3,17 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Temporary backups
+*.bak
+*.pre_cloud.bak

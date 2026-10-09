@@ -91,8 +91,16 @@ class AgentOrchestrator:
                 c.audit_status = "IN_PROGRESS"
 
         self.store.save(incident)
+
         if incident.memory_retained:
-            hindsight.retain(incident)
+            try:
+                self.hindsight_agent.retain_investigation(incident)
+            except Exception as exc:
+        # The incident remains saved, but the cloud update failed.
+                print(
+                    f"[Hindsight] Incident {incident_id} was updated locally, "
+                    f"but memory retention failed: {type(exc).__name__}: {exc}"
+                )
 
         return incident
 
